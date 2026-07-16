@@ -85,7 +85,7 @@ echo "Copying shared system files..."
 cp -af /root/packages/installer/system_files/shared/. /
 
 echo "Copying GNOME-specific system files..."
-cp -a /root/packages/installer/system_files/gnome/. /
+cp -a /root/packages/installer/system_files/niri/. /
 
 # Remove rakuos-welcome autostart for the live environment
 rm -f /etc/xdg/autostart/rakuos-welcome.desktop
