@@ -20,7 +20,7 @@ spec:
       default: "true"
 ---
 # ============================================================
-# RakuOS GNOME ISO — GitLab CI/CD Pipeline
+# RakuOS niri ISO — GitLab CI/CD Pipeline
 # ============================================================
 
 workflow:
@@ -41,7 +41,7 @@ workflow:
     - when: never
 
 variables:
-  IMAGE_REPO: "quay.io/rakuos/rakuos-gnome"
+  IMAGE_REPO: "quay.io/rakuos/rakuos-niri"
   TITANOBOA_REPO: "https://gitlab.com/rakuos/iso/rakuos-forge.git"
   TITANOBOA_REF: "main"
   PLATFORM: "amd64"
@@ -50,9 +50,9 @@ variables:
   BUILDER_DISTRO: "fedora"
   RAKUOS_SERVER_UPLOAD: "$[[ inputs.rakuos-server-upload ]]"
   SOURCEFORGE_UPLOAD: "$[[ inputs.sourceforge-upload ]]"
-  SOURCEFORGE_ARCHIVE_PATH: "${SOURCEFORGE_ARCHIVE_ROOT}/GNOME"
+  SOURCEFORGE_ARCHIVE_PATH: "${SOURCEFORGE_ARCHIVE_ROOT}/niri"
   CDN77_UPLOAD: "$[[ inputs.cdn77-upload ]]"
-  CDN77_PATH: "gnome"
+  CDN77_PATH: "niri"
 
 stages:
   - build
@@ -143,11 +143,11 @@ build-iso-standard:
       just -f rakuos-forge/Justfile build "${IMAGE_REF}" 1 none "${COMPRESSION}" NONE "${IMAGE_REF}" 1
       mkdir -p output
       if [[ "${IS_STABLE}" == "true" ]]; then
-        export NEW_ISO_NAME="rakuos-gnome-${BUILD_DATE}-${PLATFORM}.iso"
-        export LATEST_ISO_NAME="rakuos-gnome-latest-${PLATFORM}.iso"
+        export NEW_ISO_NAME="rakuos-niri-${BUILD_DATE}-${PLATFORM}.iso"
+        export LATEST_ISO_NAME="rakuos-niri-latest-${PLATFORM}.iso"
       else
-        export NEW_ISO_NAME="rakuos-gnome-${BRANCH_SLUG}-${BUILD_DATE}-${PLATFORM}.iso"
-        export LATEST_ISO_NAME="rakuos-gnome-${BRANCH_SLUG}-latest-${PLATFORM}.iso"
+        export NEW_ISO_NAME="rakuos-niri-${BRANCH_SLUG}-${BUILD_DATE}-${PLATFORM}.iso"
+        export LATEST_ISO_NAME="rakuos-niri-${BRANCH_SLUG}-latest-${PLATFORM}.iso"
       fi
       ISO_PATH="output.iso"
       [[ -f rakuos-forge/output.iso ]] && ISO_PATH="rakuos-forge/output.iso"
@@ -229,7 +229,7 @@ build-iso-standard:
         fi
       fi
   artifacts:
-    name: "rakuos-gnome-${CI_COMMIT_REF_SLUG}-standard-${CI_PIPELINE_ID}"
+    name: "rakuos-niri-${CI_COMMIT_REF_SLUG}-standard-${CI_PIPELINE_ID}"
     paths:
       - output/*.sha256
     expire_in: 7 days
@@ -248,11 +248,11 @@ build-iso-nvidia:
       just -f rakuos-forge/Justfile build "${IMAGE_REF}" 1 none "${COMPRESSION}" NONE "${IMAGE_REF}" 1
       mkdir -p output
       if [[ "${IS_STABLE}" == "true" ]]; then
-        export NEW_ISO_NAME="rakuos-gnome-nvidia-${BUILD_DATE}-${PLATFORM}.iso"
-        export LATEST_ISO_NAME="rakuos-gnome-nvidia-latest-${PLATFORM}.iso"
+        export NEW_ISO_NAME="rakuos-niri-nvidia-${BUILD_DATE}-${PLATFORM}.iso"
+        export LATEST_ISO_NAME="rakuos-niri-nvidia-latest-${PLATFORM}.iso"
       else
-        export NEW_ISO_NAME="rakuos-gnome-nvidia-${BRANCH_SLUG}-${BUILD_DATE}-${PLATFORM}.iso"
-        export LATEST_ISO_NAME="rakuos-gnome-nvidia-${BRANCH_SLUG}-latest-${PLATFORM}.iso"
+        export NEW_ISO_NAME="rakuos-niri-nvidia-${BRANCH_SLUG}-${BUILD_DATE}-${PLATFORM}.iso"
+        export LATEST_ISO_NAME="rakuos-niri-nvidia-${BRANCH_SLUG}-latest-${PLATFORM}.iso"
       fi
       ISO_PATH="output.iso"
       [[ -f rakuos-forge/output.iso ]] && ISO_PATH="rakuos-forge/output.iso"
@@ -334,7 +334,7 @@ build-iso-nvidia:
         fi
       fi
   artifacts:
-    name: "rakuos-gnome-${CI_COMMIT_REF_SLUG}-nvidia-${CI_PIPELINE_ID}"
+    name: "rakuos-niri-${CI_COMMIT_REF_SLUG}-nvidia-${CI_PIPELINE_ID}"
     paths:
       - output/*.sha256
     expire_in: 7 days
