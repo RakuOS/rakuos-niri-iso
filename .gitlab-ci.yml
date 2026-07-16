@@ -50,7 +50,7 @@ variables:
   BUILDER_DISTRO: "fedora"
   RAKUOS_SERVER_UPLOAD: "$[[ inputs.rakuos-server-upload ]]"
   SOURCEFORGE_UPLOAD: "$[[ inputs.sourceforge-upload ]]"
-  SOURCEFORGE_ARCHIVE_PATH: "${SOURCEFORGE_ARCHIVE_ROOT}/niri"
+  SOURCEFORGE_ARCHIVE_PATH: "${SOURCEFORGE_ARCHIVE_ROOT}/NIRI"
   CDN77_UPLOAD: "$[[ inputs.cdn77-upload ]]"
   CDN77_PATH: "niri"
 
