@@ -84,10 +84,17 @@ rm -vf /etc/profile.d/verify_motd.sh
 echo "Copying shared system files..."
 cp -af /root/packages/installer/system_files/shared/. /
 
-echo "Copying GNOME-specific system files..."
+echo "Copying niri-specific system files..."
 cp -a /root/packages/installer/system_files/niri/. /
 
 # Remove rakuos-welcome autostart for the live environment
 rm -f /etc/xdg/autostart/rakuos-welcome.desktop
+
+# liveuser's home already exists by this point, so newly-added /etc/skel
+# files (e.g. niri config) weren't picked up automatically at useradd time.
+if id liveuser &>/dev/null; then
+    cp -a /etc/skel/. /home/liveuser/
+    chown -R liveuser:liveuser /home/liveuser
+fi
 
 rm -rf /root/packages
