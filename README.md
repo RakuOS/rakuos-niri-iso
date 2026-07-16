@@ -1,8 +1,8 @@
-# RakuOS GNOME ISO
+# RakuOS NIRI ISO
 
-This repository builds the GNOME live ISO for RakuOS Linux.
+This repository builds the NIRI live ISO for RakuOS Linux.
 
-It is the ISO-side companion to the `rakuos-gnome` image repository and is built in GitLab using [RakuForge](https://gitlab.com/rakuos/iso/rakuos-forge), the RakuOS-maintained fork of uBlue's Titanoboa.
+It is the ISO-side companion to the `rakuos-niri` image repository and is built in GitLab using [RakuForge](https://gitlab.com/rakuos/iso/rakuos-forge), the RakuOS-maintained fork of uBlue's Titanoboa.
 
 ## Purpose
 
@@ -10,15 +10,15 @@ This repo exists to keep ISO-specific logic separate from the desktop image repo
 
 It owns:
 
-- GNOME ISO pipeline configuration
+- NIRI ISO pipeline configuration
 - live ISO customization hooks
 - post-rootfs and pre-initramfs scripts
 - edition-specific ISO naming and release behavior
 
 It does not own the desktop container image itself. That comes from:
 
-- `registry.gitlab.com/rakuos/images/rakuos-gnome`
-- `registry.gitlab.com/rakuos/images/rakuos-gnome/nvidia`
+- `registry.gitlab.com/rakuos/images/rakuos-niri`
+- `registry.gitlab.com/rakuos/images/rakuos-niri/nvidia`
 
 ## Branches
 
@@ -65,9 +65,9 @@ Upstream credit:
 
 ## Repo Layout
 
-- [config/configure-iso.sh](/var/home/tohur/Documents/Projects/rakuos-gnome-iso/config/configure-iso.sh)
-- [config/pre_initramfs.sh](/var/home/tohur/Documents/Projects/rakuos-gnome-iso/config/pre_initramfs.sh)
-- [.gitlab-ci.yml](/var/home/tohur/Documents/Projects/rakuos-gnome-iso/.gitlab-ci.yml)
+- [config/configure-iso.sh](/var/home/tohur/Documents/Projects/rakuos-niri-iso/config/configure-iso.sh)
+- [config/pre_initramfs.sh](/var/home/tohur/Documents/Projects/rakuos-niri-iso/config/pre_initramfs.sh)
+- [.gitlab-ci.yml](/var/home/tohur/Documents/Projects/rakuos-niri-iso/.gitlab-ci.yml)
 
 ## Local Notes
 
