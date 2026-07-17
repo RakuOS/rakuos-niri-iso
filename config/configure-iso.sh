@@ -18,6 +18,8 @@ dnf -qy versionlock clear
 # Install RakuOS installer (GTK frontend + common backend + fisherman)
 dnf install -qy rakuos-installer-gtk
 
+systemctl enable dotfiles-setup.service
+
 # Mask overlay services so they cannot be started or pulled in on the live ISO
 systemctl mask rakuos-overlay-sync.service rakuos-overlay-mount.service
 
