@@ -90,6 +90,4 @@ cp -a /root/packages/installer/system_files/niri/. /
 # Remove rakuos-welcome autostart for the live environment
 rm -f /etc/xdg/autostart/rakuos-welcome.desktop
 
-systemctl enable --global dotfiles-setup.service
-
 rm -rf /root/packages
