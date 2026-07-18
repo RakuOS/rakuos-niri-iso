@@ -84,8 +84,6 @@ rm -vf /etc/profile.d/verify_motd.sh
 echo "Copying shared system files..."
 cp -af /root/packages/installer/system_files/shared/. /
 
-echo "Copying niri-specific system files..."
-cp -a /root/packages/installer/system_files/niri/. /
 
 # Remove rakuos-welcome autostart for the live environment
 rm -f /etc/xdg/autostart/rakuos-welcome.desktop
