@@ -233,3 +233,37 @@ build-iso-standard:
     paths:
       - output/*.sha256
     expire_in: 7 days
+
+notify-discord:
+  stage: build
+  image: curlimages/curl:latest
+  needs:
+    - job: build-iso-standard
+  script:
+    - |
+      set -euo pipefail
+      : "${RAKURPM_TOKEN:?set RAKURPM_TOKEN in CI/CD variables}"
+      : "${RAKURPM_IP:?set RAKURPM_IP in CI/CD variables}"
+      ADMIN="${RAKURPM_ADMIN_PREFIX:-/backend}"
+      DATE_TAG="$(date -u +%Y%m%d)"
+
+      case "${CI_COMMIT_BRANCH}" in
+        "${CI_DEFAULT_BRANCH}") TAG="latest"    ;;
+        "rakuosel")             TAG="rakuosel"  ;;
+        *) echo "No ISO release notification for branch '${CI_COMMIT_BRANCH}', skipping."; exit 0 ;;
+      esac
+      VERSION="${TAG}.${DATE_TAG}"
+
+      curl -k -sf -X POST \
+        -H "Authorization: Bearer ${RAKURPM_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "{\"de\": \"${CDN77_PATH}\", \"version\": \"${VERSION}\"}" \
+        "https://${RAKURPM_IP}${ADMIN}/api/iso-release"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: always
+    - if: '$CI_COMMIT_BRANCH == "rakuosel"'
+      when: always
+    - when: never
