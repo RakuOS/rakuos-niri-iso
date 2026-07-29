@@ -28,20 +28,27 @@ dnf --setopt=protect_running_kernel=False -y remove "${kernel_pkgs[@]}" 2>/dev/n
 dnf -y --repo fedora,updates --setopt=tsflags=noscripts install kernel kernel-core kernel-devel kernel-modules
 
 dnf -y install \
-    --exclude=kernel-p03 \
-    --exclude=kernel-p03-core \
-    --exclude=kernel-p03-devel \
-    --exclude=kernel-p03-devel-matched \
-    --exclude=kernel-p03-modules \
-    --exclude=kernel-p03-modules-core \
-    --exclude=kernel-p03-modules-extra \
-    --exclude=kernel-cachyos \
-    --exclude=kernel-cachyos-core \
-    --exclude=kernel-cachyos-devel \
-    --exclude=kernel-cachyos-devel-matched \
-    --exclude=kernel-cachyos-modules \
-    --exclude=kernel-cachyos-modules-core \
-    --exclude=kernel-cachyos-modules-extra \
+--exclude=kernel-p03 \
+--exclude=kernel-p03-core \
+--exclude=kernel-p03-devel \
+--exclude=kernel-p03-devel-matched \
+--exclude=kernel-p03-modules \
+--exclude=kernel-p03-modules-core \
+--exclude=kernel-p03-modules-extra \
+--exclude=kernel-p03-v3 \
+--exclude=kernel-p03-v3-core \
+--exclude=kernel-p03-v3-devel \
+--exclude=kernel-p03-v3-devel-matched \
+--exclude=kernel-p03-v3-modules \
+--exclude=kernel-p03-v3-modules-core \
+--exclude=kernel-p03-v3-modules-extra \
+--exclude=kernel-p03-v4 \
+--exclude=kernel-p03-v4-core \
+--exclude=kernel-p03-v4-devel \
+--exclude=kernel-p03-v4-devel-matched \
+--exclude=kernel-p03-v4-modules \
+--exclude=kernel-p03-v4-modules-core \
+--exclude=kernel-p03-v4-modules-extra \
     virtualbox-guest-additions \
     amd-gpu-firmware \
     amd-ucode-firmware \

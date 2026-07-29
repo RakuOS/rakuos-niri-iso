@@ -5,8 +5,14 @@ set -exo pipefail
 source /etc/os-release
 
 # sudo requires drop-in files to be owned by root and not be writable by others
-chown root:root /etc/sudoers.d/rakuos-software
-chmod 0440 /etc/sudoers.d/rakuos-software
+chown root:root /etc/sudoers.d
+chmod 0750 /etc/sudoers.d
+chown root:root /etc/sudoers.d/rakuos
+chmod 0440 /etc/sudoers.d/rakuos
+chown root:root /etc/sudoers.d/pwfeedback
+chmod 0440 /etc/sudoers.d/pwfeedback
+chown root:root /etc/sudoers.d/secure-path
+chmod 0440 /etc/sudoers.d/secure-path
 
 # Add Flathub
 flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo

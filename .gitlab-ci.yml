@@ -234,107 +234,36 @@ build-iso-standard:
       - output/*.sha256
     expire_in: 7 days
 
-build-iso-nvidia:
-  extends: .iso-job
+notify-discord:
   stage: build
+  image: curlimages/curl:latest
+  needs:
+    - job: build-iso-standard
   script:
     - |
       set -euo pipefail
-      export IMAGE_REF="${IMAGE_REPO}-nvidia:${BRANCH_SLUG}"
-      git clone --depth 1 --branch "${TITANOBOA_REF}" "${TITANOBOA_REPO}" rakuos-forge
-      export TITANOBOA_BUILDER_DISTRO="${BUILDER_DISTRO}"
-      export HOOK_post_rootfs="${CI_PROJECT_DIR}/config/configure-iso.sh"
-      export HOOK_pre_initramfs="${CI_PROJECT_DIR}/config/pre_initramfs.sh"
-      just -f rakuos-forge/Justfile build "${IMAGE_REF}" 1 none "${COMPRESSION}" NONE "${IMAGE_REF}" 1
-      mkdir -p output
-      if [[ "${IS_STABLE}" == "true" ]]; then
-        export NEW_ISO_NAME="rakuos-niri-nvidia-${BUILD_DATE}-${PLATFORM}.iso"
-        export LATEST_ISO_NAME="rakuos-niri-nvidia-latest-${PLATFORM}.iso"
-      else
-        export NEW_ISO_NAME="rakuos-niri-nvidia-${BRANCH_SLUG}-${BUILD_DATE}-${PLATFORM}.iso"
-        export LATEST_ISO_NAME="rakuos-niri-nvidia-${BRANCH_SLUG}-latest-${PLATFORM}.iso"
-      fi
-      ISO_PATH="output.iso"
-      [[ -f rakuos-forge/output.iso ]] && ISO_PATH="rakuos-forge/output.iso"
-      [[ -f "${ISO_PATH}" ]] || { echo "ERROR: ISO output not found"; ls -la . rakuos-forge || true; exit 1; }
-      mv "${ISO_PATH}" "output/${NEW_ISO_NAME}"
-      sha256sum "output/${NEW_ISO_NAME}" > "output/${NEW_ISO_NAME}.sha256"
-      if [[ "${CI_PIPELINE_SOURCE}" != "merge_request_event" ]]; then
-        cp "output/${NEW_ISO_NAME}" "output/${LATEST_ISO_NAME}"
-        sha256sum "output/${LATEST_ISO_NAME}" > "output/${LATEST_ISO_NAME}.sha256"
-        if [[ "${RAKUOS_SERVER_UPLOAD}" == "true" ]]; then
-          ls -l /dev/net/tun || true
-          zerotier-one -d
-          zerotier-cli info || true
-          for _ in $(seq 1 30); do
-            [[ -f /var/lib/zerotier-one/identity.public ]] && break
-            sleep 1
-          done
-          zerotier-cli listnetworks || true
-          ZT_NODE_ID="$(cut -d: -f1 /var/lib/zerotier-one/identity.public)"
-          zerotier-cli join "${ZEROTIER_NETWORK_ID}"
-          curl -fsS -X POST \
-            -H "Authorization: token ${ZEROTIER_CENTRAL_TOKEN}" \
-            -H "Content-Type: application/json" \
-            --data '{"config":{"authorized":true}}' \
-            "https://api.zerotier.com/api/v1/network/${ZEROTIER_NETWORK_ID}/member/${ZT_NODE_ID}"
-          for _ in $(seq 1 30); do
-            zerotier-cli listnetworks | grep -q "${ZEROTIER_NETWORK_ID}.*OK" && break
-            sleep 2
-          done
-          sleep 10
-          ip addr show
-          ping -c 3 "${SFTP_HOST}"
-          sshpass -p "${SFTP_PASSWORD}" ssh -o StrictHostKeyChecking=no "${SFTP_USERNAME}@${SFTP_HOST}" "\
-            mkdir -p '${SFTP_TARGET}' && \
-            cd '${SFTP_TARGET}' && \
-            rm -f '${NEW_ISO_NAME}' '${LATEST_ISO_NAME}'"
-          sshpass -p "${SFTP_PASSWORD}" scp -o StrictHostKeyChecking=no \
-            "output/${NEW_ISO_NAME}" \
-            "output/${LATEST_ISO_NAME}" \
-            "${SFTP_USERNAME}@${SFTP_HOST}:${SFTP_TARGET}/"
-          echo "Removing runner from ZeroTier network..."
-          curl -fsS -X DELETE \
-            -H "Authorization: token ${ZEROTIER_CENTRAL_TOKEN}" \
-            "https://api.zerotier.com/api/v1/network/${ZEROTIER_NETWORK_ID}/member/${ZT_NODE_ID}" || true
-          zerotier-cli leave "${ZEROTIER_NETWORK_ID}" || true
-        else
-          echo "RakuOS server upload disabled; skipping ZeroTier and SFTP upload."
-        fi
-        if [[ "${CDN77_UPLOAD}" == "true" ]] && { [[ "${IS_STABLE}" == "true" ]] || [[ "${BRANCH_SLUG}" == "staging" ]]; }; then
-          echo "Purging CDN77 cache for ${CDN77_PATH}/${LATEST_ISO_NAME}..."
-          curl -fsS -X POST "https://api.cdn77.com/v3/cdn/${CDN77_CDN_ID}/job/purge/paths" \
-            -H "Authorization: Bearer ${CDN77_API_KEY}" \
-            -H "Content-Type: application/json" \
-            -d "{\"paths\": [\"/${CDN77_PATH}/${LATEST_ISO_NAME}\", \"/${CDN77_PATH}/${LATEST_ISO_NAME}.sha256\"]}" || true
-          echo "Waiting 120s for CDN cache to clear..."
-          sleep 120
-          echo "Uploading latest ISO to CDN77 (dl.rakuos.org/${CDN77_PATH})..."
-          AWS_ACCESS_KEY_ID="${CDN77_ACCESS_KEY}" AWS_SECRET_ACCESS_KEY="${CDN77_SECRET_KEY}" \
-            aws s3 cp "output/${LATEST_ISO_NAME}" \
-              "s3://${CDN77_BUCKET}/${CDN77_PATH}/${LATEST_ISO_NAME}" \
-              --endpoint-url "${CDN77_ENDPOINT_URL}" --no-progress
-          AWS_ACCESS_KEY_ID="${CDN77_ACCESS_KEY}" AWS_SECRET_ACCESS_KEY="${CDN77_SECRET_KEY}" \
-            aws s3 cp "output/${LATEST_ISO_NAME}.sha256" \
-              "s3://${CDN77_BUCKET}/${CDN77_PATH}/${LATEST_ISO_NAME}.sha256" \
-              --endpoint-url "${CDN77_ENDPOINT_URL}" --no-progress
-          echo "CDN77 upload complete."
-        else
-          echo "CDN77 upload disabled or non-stable branch; skipping."
-        fi
-        if [[ "${SOURCEFORGE_UPLOAD}" == "true" ]]; then
-          sshpass -p "${SOURCEFORGE_PASSWORD}" scp -o StrictHostKeyChecking=no \
-            "output/${LATEST_ISO_NAME}" \
-            "${SOURCEFORGE_USERNAME}@${SOURCEFORGE_HOST}:${SOURCEFORGE_LATEST_PATH}/${LATEST_ISO_NAME}"
-          sshpass -p "${SOURCEFORGE_PASSWORD}" scp -o StrictHostKeyChecking=no \
-            "output/${NEW_ISO_NAME}" \
-            "${SOURCEFORGE_USERNAME}@${SOURCEFORGE_HOST}:${SOURCEFORGE_ARCHIVE_PATH}/${NEW_ISO_NAME}"
-        else
-          echo "SourceForge upload disabled; skipping ISO upload."
-        fi
-      fi
-  artifacts:
-    name: "rakuos-niri-${CI_COMMIT_REF_SLUG}-nvidia-${CI_PIPELINE_ID}"
-    paths:
-      - output/*.sha256
-    expire_in: 7 days
+      : "${RAKURPM_TOKEN:?set RAKURPM_TOKEN in CI/CD variables}"
+      : "${RAKURPM_IP:?set RAKURPM_IP in CI/CD variables}"
+      ADMIN="${RAKURPM_ADMIN_PREFIX:-/backend}"
+      DATE_TAG="$(date -u +%Y%m%d)"
+
+      case "${CI_COMMIT_BRANCH}" in
+        "${CI_DEFAULT_BRANCH}") TAG="latest"    ;;
+        "rakuosel")             TAG="rakuosel"  ;;
+        *) echo "No ISO release notification for branch '${CI_COMMIT_BRANCH}', skipping."; exit 0 ;;
+      esac
+      VERSION="${TAG}.${DATE_TAG}"
+
+      curl -k -sf -X POST \
+        -H "Authorization: Bearer ${RAKURPM_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "{\"de\": \"${CDN77_PATH}\", \"version\": \"${VERSION}\"}" \
+        "https://${RAKURPM_IP}${ADMIN}/api/iso-release"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: always
+    - if: '$CI_COMMIT_BRANCH == "rakuosel"'
+      when: always
+    - when: never
