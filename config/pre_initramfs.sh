@@ -95,6 +95,9 @@ dnf -y install \
 --exclude=kernel-p03-gcc-v4-core \
 --exclude=kernel-p03-gcc-v4-devel \
 --exclude=kernel-p03-gcc-v4-devel-matched \
+--exclude=kernel-p03-gcc-v4-modules \
+--exclude=kernel-p03-gcc-v4-modules-core \
+--exclude=kernel-p03-gcc-v4-modules-extra \
     virtualbox-guest-additions \
     amd-gpu-firmware \
     amd-ucode-firmware \
