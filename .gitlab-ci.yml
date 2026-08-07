@@ -253,11 +253,12 @@ notify-discord:
       esac
       VERSION="${TAG}.${DATE_TAG}"
 
-      curl -k -sf -X POST \
-        -H "Authorization: Bearer ${WEBSITE_CI_API_TOKEN}" \
-        -H "Content-Type: application/json" \
-        -d "{\"de\": \"${CDN77_PATH}\", \"version\": \"${VERSION}\"}" \
-        "https://${WEBSITE_HOST}/api/iso-release"
+      PAYLOAD="{\"de\": \"${CDN77_PATH}\", \"version\": \"${VERSION}\"}"
+      DISCORD_CURL_ARGS=(-k -sf -X POST -H "Authorization: Bearer ${WEBSITE_CI_API_TOKEN}" -H "Content-Type: application/json" -d "${PAYLOAD}")
+      if ! curl "${DISCORD_CURL_ARGS[@]}" "https://${WEBSITE_HOST}/api/iso-release"; then
+        echo "HTTPS request to ${WEBSITE_HOST} failed, falling back to plain HTTP on :8080..."
+        curl "${DISCORD_CURL_ARGS[@]}" "http://${WEBSITE_HOST}:8080/api/iso-release"
+      fi
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: never
