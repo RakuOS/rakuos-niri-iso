@@ -254,10 +254,7 @@ notify-discord:
       VERSION="${TAG}.${DATE_TAG}"
 
       PAYLOAD="{\"de\": \"${CDN77_PATH}\", \"version\": \"${VERSION}\"}"
-      if ! curl -k -sf -X POST -H "Authorization: Bearer ${WEBSITE_CI_API_TOKEN}" -H "Content-Type: application/json" -d "${PAYLOAD}" "https://${WEBSITE_HOST}/api/iso-release"; then
-        echo "HTTPS request to ${WEBSITE_HOST} failed, falling back to plain HTTP on :8080..."
-        curl -sf -X POST -H "Authorization: Bearer ${WEBSITE_CI_API_TOKEN}" -H "Content-Type: application/json" -d "${PAYLOAD}" "http://${WEBSITE_HOST}:8080/api/iso-release"
-      fi
+      curl -k -sS -f -X POST -H "Authorization: Bearer ${WEBSITE_CI_API_TOKEN}" -H "Content-Type: application/json" -d "${PAYLOAD}" "https://${WEBSITE_HOST}/api/iso-release"
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: never
