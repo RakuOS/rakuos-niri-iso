@@ -50,12 +50,12 @@ kernel_pkgs=(
     kernel-p03-gcc-v4-modules-core
     kernel-p03-gcc-v4-modules-extra
 )
-dnf -y versionlock delete "${kernel_pkgs[@]}" 2>/dev/null || true
-dnf --setopt=protect_running_kernel=False -y remove "${kernel_pkgs[@]}" 2>/dev/null || true
+rum -y versionlock delete "${kernel_pkgs[@]}" 2>/dev/null || true
+rum --setopt=protect_running_kernel=False -y remove "${kernel_pkgs[@]}" 2>/dev/null || true
 (cd /usr/lib/modules && rm -rf -- ./*)
-dnf -y --repo fedora,updates --setopt=tsflags=noscripts install kernel kernel-core kernel-devel kernel-modules
+rum -y --repo fedora,updates --setopt=tsflags=noscripts install kernel kernel-core kernel-devel kernel-modules
 
-dnf -y install \
+rum -y install \
 --exclude=kernel-p03 \
 --exclude=kernel-p03-core \
 --exclude=kernel-p03-devel \
@@ -129,4 +129,4 @@ akmods --force --kernels "$KVER"
 
 kernel=$(find /usr/lib/modules -maxdepth 1 -type d -printf '%P\n' | grep .)
 depmod "$kernel"
-dnf clean all -yq
+rum clean all -yq

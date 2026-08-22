@@ -19,10 +19,10 @@ flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.f
 flatpak update --system --appstream -y
 
 # Remove all versionlocks to avoid dependency issues
-dnf -qy versionlock clear
+rum -qy versionlock clear
 
 # Install RakuOS installer (GTK frontend + common backend + fisherman)
-dnf install -qy rakuos-installer-gtk
+rum install -qy rakuos-installer-gtk
 
 # Mask overlay services so they cannot be started or pulled in on the live ISO
 systemctl mask rakuos-overlay-sync.service rakuos-overlay-mount.service
@@ -37,7 +37,7 @@ mapfile -t PACKAGES < <(
     | grep -v '^$'
 ) || true
 
-dnf install -y --refresh "${PACKAGES[@]}"
+rum install -y --refresh "${PACKAGES[@]}"
 
 # Reset RakuOS overlay state for live ISO
 echo "Resetting RakuOS overlay state for live ISO..."
@@ -71,8 +71,8 @@ fi
 # Re-enable nouveau for the live session on NVIDIA images
 if [[ $imageref == *-nvidia* ]]; then
     for pkg in nvidia-gpu-firmware mesa-vulkan-drivers; do
-        dnf -yq reinstall --allowerasing $pkg ||
-            dnf -yq install --allowerasing $pkg
+        rum -yq reinstall --allowerasing $pkg ||
+            rum -yq install --allowerasing $pkg
     done
     # Ensure nouveau vulkan ICDs exist
     (
