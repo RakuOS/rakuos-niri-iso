@@ -7,13 +7,13 @@ echo "Preparing initramfs for RakuOS Linux Live ISO"
 # boots with Secure Boot enabled. The installed system gets the CachyOS kernel
 # from the container image — this only affects the live boot environment.
 kernel_pkgs=(
-    kernel-p03
-    kernel-p03-core
-    kernel-p03-devel
-    kernel-p03-devel-matched
-    kernel-p03-modules
-    kernel-p03-modules-core
-    kernel-p03-modules-extra
+    kernel-p03-v2
+    kernel-p03-v2-core
+    kernel-p03-v2-devel
+    kernel-p03-v2-devel-matched
+    kernel-p03-v2-modules
+    kernel-p03-v2-modules-core
+    kernel-p03-v2-modules-extra
     kernel-p03-v3
     kernel-p03-v3-core
     kernel-p03-v3-devel
@@ -28,27 +28,6 @@ kernel_pkgs=(
     kernel-p03-v4-modules
     kernel-p03-v4-modules-core
     kernel-p03-v4-modules-extra
-    kernel-p03-gcc
-    kernel-p03-gcc-core
-    kernel-p03-gcc-devel
-    kernel-p03-gcc-devel-matched
-    kernel-p03-gcc-modules
-    kernel-p03-gcc-modules-core
-    kernel-p03-gcc-modules-extra
-    kernel-p03-gcc-v3
-    kernel-p03-gcc-v3-core
-    kernel-p03-gcc-v3-devel
-    kernel-p03-gcc-v3-devel-matched
-    kernel-p03-gcc-v3-modules
-    kernel-p03-gcc-v3-modules-core
-    kernel-p03-gcc-v3-modules-extra
-    kernel-p03-gcc-v4
-    kernel-p03-gcc-v4-core
-    kernel-p03-gcc-v4-devel
-    kernel-p03-gcc-v4-devel-matched
-    kernel-p03-gcc-v4-modules
-    kernel-p03-gcc-v4-modules-core
-    kernel-p03-gcc-v4-modules-extra
 )
 rum -y versionlock delete "${kernel_pkgs[@]}" 2>/dev/null || true
 rum --setopt=protect_running_kernel=False -y remove "${kernel_pkgs[@]}" 2>/dev/null || true
