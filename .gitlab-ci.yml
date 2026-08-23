@@ -135,7 +135,7 @@ build-iso-standard:
       export IMAGE_REF="${IMAGE_REPO}:${BRANCH_SLUG}"
       rpm --import https://repo.rakuos.org/pubkey.gpg
       dnf -y config-manager addrepo --from-repofile=https://repo.rakuos.org/rakuos.repo
-      dnf install -y --exclude=rum rakuos-forge
+      dnf install -y rakuos-forge
       export RAKUFORGE_BUILDER_DISTRO="${BUILDER_DISTRO}"
       export HOOK_post_rootfs="${CI_PROJECT_DIR}/config/configure-iso.sh"
       export HOOK_pre_initramfs="${CI_PROJECT_DIR}/config/pre_initramfs.sh"
