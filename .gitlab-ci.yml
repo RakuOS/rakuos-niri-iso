@@ -42,8 +42,6 @@ workflow:
 
 variables:
   IMAGE_REPO: "quay.io/rakuos/rakuos-niri"
-  TITANOBOA_REPO: "https://gitlab.com/rakuos/iso/rakuos-forge.git"
-  TITANOBOA_REF: "main"
   PLATFORM: "amd64"
   COMPRESSION: "squashfs"
   JOB_IMAGE: "quay.io/fedora/fedora:latest"
@@ -66,7 +64,6 @@ stages:
       set -euo pipefail
       dnf install -y \
         git \
-        just \
         podman \
         jq \
         curl \
@@ -136,11 +133,13 @@ build-iso-standard:
     - |
       set -euo pipefail
       export IMAGE_REF="${IMAGE_REPO}:${BRANCH_SLUG}"
-      git clone --depth 1 --branch "${TITANOBOA_REF}" "${TITANOBOA_REPO}" rakuos-forge
-      export TITANOBOA_BUILDER_DISTRO="${BUILDER_DISTRO}"
+      rpm --import https://repo.rakuos.org/pubkey.gpg
+      dnf -y config-manager addrepo --from-repofile=https://repo.rakuos.org/rakuos.repo
+      dnf install -y --exclude=rum rakuos-forge
+      export RAKUFORGE_BUILDER_DISTRO="${BUILDER_DISTRO}"
       export HOOK_post_rootfs="${CI_PROJECT_DIR}/config/configure-iso.sh"
       export HOOK_pre_initramfs="${CI_PROJECT_DIR}/config/pre_initramfs.sh"
-      just -f rakuos-forge/Justfile build "${IMAGE_REF}" 1 none "${COMPRESSION}" NONE "${IMAGE_REF}" 1
+      rakuos-forge build "${IMAGE_REF}" --flatpaks-file none --compression "${COMPRESSION}" --extra-kargs NONE --container-image "${IMAGE_REF}"
       mkdir -p output
       if [[ "${IS_STABLE}" == "true" ]]; then
         export NEW_ISO_NAME="rakuos-niri-${BUILD_DATE}-${PLATFORM}.iso"
@@ -150,8 +149,7 @@ build-iso-standard:
         export LATEST_ISO_NAME="rakuos-niri-${BRANCH_SLUG}-latest-${PLATFORM}.iso"
       fi
       ISO_PATH="output.iso"
-      [[ -f rakuos-forge/output.iso ]] && ISO_PATH="rakuos-forge/output.iso"
-      [[ -f "${ISO_PATH}" ]] || { echo "ERROR: ISO output not found"; ls -la . rakuos-forge || true; exit 1; }
+      [[ -f "${ISO_PATH}" ]] || { echo "ERROR: ISO output not found"; ls -la . || true; exit 1; }
       mv "${ISO_PATH}" "output/${NEW_ISO_NAME}"
       sha256sum "output/${NEW_ISO_NAME}" > "output/${NEW_ISO_NAME}.sha256"
       if [[ "${CI_PIPELINE_SOURCE}" != "merge_request_event" ]]; then
