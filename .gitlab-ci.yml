@@ -139,7 +139,7 @@ build-iso-standard:
       export TITANOBOA_BUILDER_DISTRO="${BUILDER_DISTRO}"
       export HOOK_post_rootfs="${CI_PROJECT_DIR}/config/configure-iso.sh"
       export HOOK_pre_initramfs="${CI_PROJECT_DIR}/config/pre_initramfs.sh"
-      (cd rakuos-forge && just build "${IMAGE_REF}" flatpaks_file=none compression="${COMPRESSION}" extra_kargs=NONE container_image="${IMAGE_REF}")
+      (cd rakuos-forge && just build "${IMAGE_REF}" 1 none "${COMPRESSION}" NONE "${IMAGE_REF}")
       mkdir -p output
       if [[ "${IS_STABLE}" == "true" ]]; then
         export NEW_ISO_NAME="rakuos-niri-${BUILD_DATE}-${PLATFORM}.iso"
