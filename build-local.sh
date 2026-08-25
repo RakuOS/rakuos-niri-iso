@@ -19,7 +19,7 @@ IMAGE_REF="${IMAGE_REPO}:${BRANCH_SLUG}"
 COMPRESSION="${COMPRESSION:-squashfs}"
 SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-export TITANOBOA_BUILDER_DISTRO="${BUILDER_DISTRO:-fedora}"
+export RAKUFORGE_BUILDER_DISTRO="${BUILDER_DISTRO:-fedora}"
 export HOOK_post_rootfs="${SELF_DIR}/config/configure-iso.sh"
 export HOOK_pre_initramfs="${SELF_DIR}/config/pre_initramfs.sh"
 
