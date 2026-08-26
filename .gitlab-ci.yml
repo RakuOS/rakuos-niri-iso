@@ -69,20 +69,6 @@ stages:
         curl \
         findutils \
         tar \
-        xorriso \
-        dosfstools \
-        mtools \
-        grub2 \
-        grub2-efi \
-        grub2-tools \
-        grub2-tools-extra \
-        grub2-efi-x64 \
-        grub2-efi-x64-cdboot \
-        grub2-efi-x64-modules \
-        shim \
-        squashfs-tools \
-        erofs-utils \
-        policycoreutils \
         openssh-clients \
         sshpass \
         iproute \
