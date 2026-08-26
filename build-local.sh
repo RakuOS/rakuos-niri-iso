@@ -4,8 +4,8 @@
 # Usage: ./build-local.sh [branch_slug]
 #   branch_slug defaults to "latest" (i.e. quay.io/rakuos/rakuos-niri:latest)
 #
-# Requires `just` and a checkout of rakuos-forge (default: found as a sibling
-# monorepo path ../../packages/rakuos/rakuos-forge; override with FORGE_DIR).
+# Requires `just`. Clones rakuos-forge fresh (TITANOBOA_REPO/TITANOBOA_REF,
+# same as CI) into ./rakuos-forge unless it's already there.
 
 set -euo pipefail
 
@@ -14,17 +14,18 @@ if ! command -v just >/dev/null 2>&1; then
   exit 1
 fi
 
-SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-FORGE_DIR="${FORGE_DIR:-${SELF_DIR}/../../packages/rakuos/rakuos-forge}"
-if [ ! -f "${FORGE_DIR}/Justfile" ]; then
-  echo "ERROR: no Justfile found at ${FORGE_DIR} (set FORGE_DIR to a rakuos-forge checkout)" >&2
-  exit 1
-fi
-
 if [ "$(id -u)" -ne 0 ]; then
   echo "Re-executing with sudo (build needs real root for privileged container setup)..."
-  exec sudo --preserve-env=COMPRESSION,BUILDER_DISTRO,FORGE_DIR "$0" "$@"
+  exec sudo --preserve-env=COMPRESSION,BUILDER_DISTRO,TITANOBOA_REPO,TITANOBOA_REF "$0" "$@"
 fi
+
+SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TITANOBOA_REPO="${TITANOBOA_REPO:-https://gitlab.com/rakuos/packages/rakuos/rakuos-forge.git}"
+TITANOBOA_REF="${TITANOBOA_REF:-main}"
+FORGE_DIR="${SELF_DIR}/rakuos-forge"
+
+rm -rf "${FORGE_DIR}"
+git clone --depth 1 --branch "${TITANOBOA_REF}" "${TITANOBOA_REPO}" "${FORGE_DIR}"
 
 IMAGE_REPO="quay.io/rakuos/rakuos-niri"
 BRANCH_SLUG="${1:-latest}"
