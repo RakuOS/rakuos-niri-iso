@@ -71,6 +71,7 @@ stages:
         tar \
         xorriso \
         dosfstools \
+        mtools \
         grub2 \
         grub2-efi \
         grub2-tools \
