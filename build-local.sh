@@ -32,6 +32,12 @@ export RAKUFORGE_BUILDER_DISTRO="${BUILDER_DISTRO:-fedora}"
 export HOOK_post_rootfs="${SELF_DIR}/config/configure-iso.sh"
 export HOOK_pre_initramfs="${SELF_DIR}/config/pre_initramfs.sh"
 
+# Clean up leftovers from previous runs (stale output.iso from an
+# interrupted build, old ISOs in output/) so a failed/older run can
+# never be mistaken for the result of this one.
+rm -f "${SELF_DIR}/output.iso"
+rm -rf "${SELF_DIR}/output"
+
 (cd "${SELF_DIR}" && rakuos-forge build "${IMAGE_REF}" --flatpaks-file none --compression "${COMPRESSION}" --extra-kargs NONE --container-image "${IMAGE_REF}")
 
 mkdir -p "${SELF_DIR}/output"
