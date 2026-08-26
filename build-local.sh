@@ -1,34 +1,37 @@
 #!/usr/bin/env bash
-# Build the RakuOS Niri ISO locally using the installed rakuos-forge (Rust CLI).
+# Build the RakuOS Niri ISO locally using rakuos-forge's Justfile.
 #
 # Usage: ./build-local.sh [branch_slug]
 #   branch_slug defaults to "latest" (i.e. quay.io/rakuos/rakuos-niri:latest)
 #
-# Requires the rakuos-forge package to already be installed on the system.
+# Requires `just` and a checkout of rakuos-forge (default: found as a sibling
+# monorepo path ../../packages/rakuos/rakuos-forge; override with FORGE_DIR).
 
 set -euo pipefail
 
-if ! command -v rakuos-forge >/dev/null 2>&1; then
-  echo "ERROR: rakuos-forge is not installed (dnf install rakuos-forge)" >&2
+if ! command -v just >/dev/null 2>&1; then
+  echo "ERROR: just is not installed (dnf install just)" >&2
   exit 1
 fi
 
-# The build needs real root (loop-device setup for efiboot.img, privileged
-# podman --rootfs/--privileged runs) — rootless podman can't get the kernel
-# to allocate new /dev/loopN devices no matter what flags it's given. Re-exec
-# under sudo up front rather than relying on rakuos-forge to sudo internally.
+SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FORGE_DIR="${FORGE_DIR:-${SELF_DIR}/../../packages/rakuos/rakuos-forge}"
+if [ ! -f "${FORGE_DIR}/Justfile" ]; then
+  echo "ERROR: no Justfile found at ${FORGE_DIR} (set FORGE_DIR to a rakuos-forge checkout)" >&2
+  exit 1
+fi
+
 if [ "$(id -u)" -ne 0 ]; then
-  echo "Re-executing with sudo (build needs real root for loop-device/privileged container setup)..."
-  exec sudo --preserve-env=COMPRESSION,BUILDER_DISTRO "$0" "$@"
+  echo "Re-executing with sudo (build needs real root for privileged container setup)..."
+  exec sudo --preserve-env=COMPRESSION,BUILDER_DISTRO,FORGE_DIR "$0" "$@"
 fi
 
 IMAGE_REPO="quay.io/rakuos/rakuos-niri"
 BRANCH_SLUG="${1:-latest}"
 IMAGE_REF="${IMAGE_REPO}:${BRANCH_SLUG}"
 COMPRESSION="${COMPRESSION:-squashfs}"
-SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-export RAKUFORGE_BUILDER_DISTRO="${BUILDER_DISTRO:-fedora}"
+export TITANOBOA_BUILDER_DISTRO="${BUILDER_DISTRO:-fedora}"
 export HOOK_post_rootfs="${SELF_DIR}/config/configure-iso.sh"
 export HOOK_pre_initramfs="${SELF_DIR}/config/pre_initramfs.sh"
 
@@ -38,7 +41,7 @@ export HOOK_pre_initramfs="${SELF_DIR}/config/pre_initramfs.sh"
 rm -f "${SELF_DIR}/output.iso"
 rm -rf "${SELF_DIR}/output"
 
-(cd "${SELF_DIR}" && rakuos-forge build "${IMAGE_REF}" --flatpaks-file none --compression "${COMPRESSION}" --extra-kargs NONE --container-image "${IMAGE_REF}")
+(cd "${SELF_DIR}" && just -f "${FORGE_DIR}/Justfile" build "${IMAGE_REF}" 1 none "${COMPRESSION}" NONE "${IMAGE_REF}" 1)
 
 mkdir -p "${SELF_DIR}/output"
 mv "${SELF_DIR}/output.iso" "${SELF_DIR}/output/rakuos-niri-${BRANCH_SLUG}.iso"
