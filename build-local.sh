@@ -13,6 +13,15 @@ if ! command -v rakuos-forge >/dev/null 2>&1; then
   exit 1
 fi
 
+# The build needs real root (loop-device setup for efiboot.img, privileged
+# podman --rootfs/--privileged runs) — rootless podman can't get the kernel
+# to allocate new /dev/loopN devices no matter what flags it's given. Re-exec
+# under sudo up front rather than relying on rakuos-forge to sudo internally.
+if [ "$(id -u)" -ne 0 ]; then
+  echo "Re-executing with sudo (build needs real root for loop-device/privileged container setup)..."
+  exec sudo --preserve-env=COMPRESSION,BUILDER_DISTRO "$0" "$@"
+fi
+
 IMAGE_REPO="quay.io/rakuos/rakuos-niri"
 BRANCH_SLUG="${1:-latest}"
 IMAGE_REF="${IMAGE_REPO}:${BRANCH_SLUG}"
