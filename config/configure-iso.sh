@@ -24,6 +24,23 @@ rum -qy versionlock clear
 # Install RakuOS installer (GTK frontend + common backend + fisherman)
 rum install -qy rakuos-installer-gtk
 
+# Allow the RakuOS installer's local `oci:` re-export of this image to pass
+# signature policy: the default policy.json (default: reject, per-registry
+# allowances only under the `docker` transport) has no `oci` transport entry,
+# so bootc install --source-imgref oci:... gets rejected with "Source image
+# ... is rejected by policy." even though the OCI export never leaves this
+# same, already-trusted image. Scope the relaxation to `oci` only -- leave
+# the registry/sigstore checks under `docker` untouched.
+python3 - <<'PY'
+import json
+path = "/etc/containers/policy.json"
+with open(path) as f:
+    policy = json.load(f)
+policy.setdefault("transports", {})["oci"] = {"": [{"type": "insecureAcceptAnything"}]}
+with open(path, "w") as f:
+    json.dump(policy, f, indent=2)
+PY
+
 # Mask overlay services so they cannot be started or pulled in on the live ISO
 systemctl mask rakuos-overlay-sync.service rakuos-overlay-mount.service
 
