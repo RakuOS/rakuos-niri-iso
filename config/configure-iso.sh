@@ -14,10 +14,6 @@ chmod 0440 /etc/sudoers.d/pwfeedback
 chown root:root /etc/sudoers.d/secure-path
 chmod 0440 /etc/sudoers.d/secure-path
 
-# Add Flathub
-flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-flatpak update --system --appstream -y
-
 # Remove all versionlocks to avoid dependency issues
 rum -qy versionlock clear
 
