@@ -189,6 +189,28 @@ build-iso-standard:
             -d "{\"paths\": [\"/${CDN77_PATH}/${LATEST_ISO_NAME}\", \"/${CDN77_PATH}/${LATEST_ISO_NAME}.sha256\"]}" || true
           echo "Waiting 120s for CDN cache to clear..."
           sleep 120
+          echo "Aborting any stranded multipart uploads for ${CDN77_PATH}/${LATEST_ISO_NAME}..."
+          # A prior job that got retried/cancelled/timed out mid-upload can
+          # leave an incomplete multipart upload sitting on CDN77 for this
+          # same key. CDN77 (unlike AWS S3 itself) then rejects a fresh
+          # upload's CompleteMultipartUpload with "This multipart completion
+          # is already in progress" — there's nothing wrong with *this*
+          # upload, it's colliding with that leftover session. Clear out any
+          # such stale upload IDs for this key before starting a new one.
+          AWS_ACCESS_KEY_ID="${CDN77_ACCESS_KEY}" AWS_SECRET_ACCESS_KEY="${CDN77_SECRET_KEY}" \
+            aws s3api list-multipart-uploads \
+              --bucket "${CDN77_BUCKET}" --prefix "${CDN77_PATH}/${LATEST_ISO_NAME}" \
+              --endpoint-url "${CDN77_ENDPOINT_URL}" \
+              --query "Uploads[].UploadId" --output text 2>/dev/null \
+            | tr '\t' '\n' \
+            | while read -r upload_id; do
+                [[ -z "${upload_id}" ]] && continue
+                echo "Aborting stranded multipart upload ${upload_id}..."
+                AWS_ACCESS_KEY_ID="${CDN77_ACCESS_KEY}" AWS_SECRET_ACCESS_KEY="${CDN77_SECRET_KEY}" \
+                  aws s3api abort-multipart-upload \
+                    --bucket "${CDN77_BUCKET}" --key "${CDN77_PATH}/${LATEST_ISO_NAME}" \
+                    --upload-id "${upload_id}" --endpoint-url "${CDN77_ENDPOINT_URL}" || true
+              done
           echo "Uploading latest ISO to CDN77 (dl.rakuos.org/${CDN77_PATH})..."
           AWS_ACCESS_KEY_ID="${CDN77_ACCESS_KEY}" AWS_SECRET_ACCESS_KEY="${CDN77_SECRET_KEY}" \
             aws s3 cp "output/${LATEST_ISO_NAME}" \
