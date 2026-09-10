@@ -28,6 +28,27 @@ kernel_pkgs=(
     kernel-p03-v4-modules
     kernel-p03-v4-modules-core
     kernel-p03-v4-modules-extra
+    kernel-p03-v2-staging
+    kernel-p03-v2-staging-core
+    kernel-p03-v2-staging-devel
+    kernel-p03-v2-staging-devel-matched
+    kernel-p03-v2-staging-modules
+    kernel-p03-v2-staging-modules-core
+    kernel-p03-v2-staging-modules-extra
+    kernel-p03-v3-staging
+    kernel-p03-v3-staging-core
+    kernel-p03-v3-staging-devel
+    kernel-p03-v3-staging-devel-matched
+    kernel-p03-v3-staging-modules
+    kernel-p03-v3-staging-modules-core
+    kernel-p03-v3-staging-modules-extra
+    kernel-p03-v4-staging
+    kernel-p03-v4-staging-core
+    kernel-p03-v4-staging-devel
+    kernel-p03-v4-staging-devel-matched
+    kernel-p03-v4-staging-modules
+    kernel-p03-v4-staging-modules-core
+    kernel-p03-v4-staging-modules-extra
 )
 rum -y versionlock delete "${kernel_pkgs[@]}" 2>/dev/null || true
 rum --setopt=protect_running_kernel=False -y remove "${kernel_pkgs[@]}" 2>/dev/null || true
@@ -35,13 +56,13 @@ rum --setopt=protect_running_kernel=False -y remove "${kernel_pkgs[@]}" 2>/dev/n
 rum -y --repo fedora,updates --setopt=tsflags=noscripts install kernel kernel-core kernel-devel kernel-modules
 
 rum -y install \
---exclude=kernel-p03 \
---exclude=kernel-p03-core \
---exclude=kernel-p03-devel \
---exclude=kernel-p03-devel-matched \
---exclude=kernel-p03-modules \
---exclude=kernel-p03-modules-core \
---exclude=kernel-p03-modules-extra \
+--exclude=kernel-p03-v2 \
+--exclude=kernel-p03-v2-core \
+--exclude=kernel-p03-v2-devel \
+--exclude=kernel-p03-v2-devel-matched \
+--exclude=kernel-p03-v2-modules \
+--exclude=kernel-p03-v2-modules-core \
+--exclude=kernel-p03-v2-modules-extra \
 --exclude=kernel-p03-v3 \
 --exclude=kernel-p03-v3-core \
 --exclude=kernel-p03-v3-devel \
@@ -56,27 +77,27 @@ rum -y install \
 --exclude=kernel-p03-v4-modules \
 --exclude=kernel-p03-v4-modules-core \
 --exclude=kernel-p03-v4-modules-extra \
---exclude=kernel-p03-gcc \
---exclude=kernel-p03-gcc-core \
---exclude=kernel-p03-gcc-devel \
---exclude=kernel-p03-gcc-devel-matched \
---exclude=kernel-p03-gcc-modules \
---exclude=kernel-p03-gcc-modules-core \
---exclude=kernel-p03-gcc-modules-extra \
---exclude=kernel-p03-gcc-v3 \
---exclude=kernel-p03-gcc-v3-core \
---exclude=kernel-p03-gcc-v3-devel \
---exclude=kernel-p03-gcc-v3-devel-matched \
---exclude=kernel-p03-gcc-v3-modules \
---exclude=kernel-p03-gcc-v3-modules-core \
---exclude=kernel-p03-gcc-v3-modules-extra \
---exclude=kernel-p03-gcc-v4 \
---exclude=kernel-p03-gcc-v4-core \
---exclude=kernel-p03-gcc-v4-devel \
---exclude=kernel-p03-gcc-v4-devel-matched \
---exclude=kernel-p03-gcc-v4-modules \
---exclude=kernel-p03-gcc-v4-modules-core \
---exclude=kernel-p03-gcc-v4-modules-extra \
+--exclude=kernel-p03-v2-staging \
+--exclude=kernel-p03-v2-staging-core \
+--exclude=kernel-p03-v2-staging-devel \
+--exclude=kernel-p03-v2-staging-devel-matched \
+--exclude=kernel-p03-v2-staging-modules \
+--exclude=kernel-p03-v2-staging-modules-core \
+--exclude=kernel-p03-v2-staging-modules-extra \
+--exclude=kernel-p03-v3-staging \
+--exclude=kernel-p03-v3-staging-core \
+--exclude=kernel-p03-v3-staging-devel \
+--exclude=kernel-p03-v3-staging-devel-matched \
+--exclude=kernel-p03-v3-staging-modules \
+--exclude=kernel-p03-v3-staging-modules-core \
+--exclude=kernel-p03-v3-staging-modules-extra \
+--exclude=kernel-p03-v4-staging \
+--exclude=kernel-p03-v4-staging-core \
+--exclude=kernel-p03-v4-staging-devel \
+--exclude=kernel-p03-v4-staging-devel-matched \
+--exclude=kernel-p03-v4-staging-modules \
+--exclude=kernel-p03-v4-staging-modules-core \
+--exclude=kernel-p03-v4-staging-modules-extra \
     virtualbox-guest-additions \
     amd-gpu-firmware \
     amd-ucode-firmware \
