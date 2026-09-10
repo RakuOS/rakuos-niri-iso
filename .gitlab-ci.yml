@@ -197,6 +197,9 @@ build-iso-standard:
           # is already in progress" — there's nothing wrong with *this*
           # upload, it's colliding with that leftover session. Clear out any
           # such stale upload IDs for this key before starting a new one.
+          # (--query returns the literal string "None", not empty output,
+          # when there are no Uploads at all — filter that out too, or
+          # abort-multipart-upload gets called with an empty --upload-id.)
           AWS_ACCESS_KEY_ID="${CDN77_ACCESS_KEY}" AWS_SECRET_ACCESS_KEY="${CDN77_SECRET_KEY}" \
             aws s3api list-multipart-uploads \
               --bucket "${CDN77_BUCKET}" --prefix "${CDN77_PATH}/${LATEST_ISO_NAME}" \
@@ -204,22 +207,40 @@ build-iso-standard:
               --query "Uploads[].UploadId" --output text 2>/dev/null \
             | tr '\t' '\n' \
             | while read -r upload_id; do
-                [[ -z "${upload_id}" ]] && continue
+                [[ -z "${upload_id}" || "${upload_id}" == "None" ]] && continue
                 echo "Aborting stranded multipart upload ${upload_id}..."
                 AWS_ACCESS_KEY_ID="${CDN77_ACCESS_KEY}" AWS_SECRET_ACCESS_KEY="${CDN77_SECRET_KEY}" \
                   aws s3api abort-multipart-upload \
                     --bucket "${CDN77_BUCKET}" --key "${CDN77_PATH}/${LATEST_ISO_NAME}" \
                     --upload-id "${upload_id}" --endpoint-url "${CDN77_ENDPOINT_URL}" || true
               done
+          # Even with no listable stranded upload, CDN77 has been observed
+          # to reject a CompleteMultipartUpload as "already in progress" on
+          # the very first attempt — almost certainly a still-settling
+          # server-side state from the purge/delete above, not anything
+          # this job did wrong. That's transient, so retry the upload
+          # itself a few times with a short backoff rather than failing the
+          # whole job over what clears up on its own a few seconds later.
+          cdn77_upload_with_retry() {
+            local src="$1" dest="$2" attempt=1 max_attempts=5
+            while true; do
+              if AWS_ACCESS_KEY_ID="${CDN77_ACCESS_KEY}" AWS_SECRET_ACCESS_KEY="${CDN77_SECRET_KEY}" \
+                   aws s3 cp "${src}" "s3://${CDN77_BUCKET}/${dest}" \
+                     --endpoint-url "${CDN77_ENDPOINT_URL}" --no-progress; then
+                return 0
+              fi
+              if [[ "${attempt}" -ge "${max_attempts}" ]]; then
+                echo "CDN77 upload of ${dest} failed after ${attempt} attempts."
+                return 1
+              fi
+              echo "CDN77 upload of ${dest} failed (attempt ${attempt}/${max_attempts}), retrying in 20s..."
+              attempt=$((attempt + 1))
+              sleep 20
+            done
+          }
           echo "Uploading latest ISO to CDN77 (dl.rakuos.org/${CDN77_PATH})..."
-          AWS_ACCESS_KEY_ID="${CDN77_ACCESS_KEY}" AWS_SECRET_ACCESS_KEY="${CDN77_SECRET_KEY}" \
-            aws s3 cp "output/${LATEST_ISO_NAME}" \
-              "s3://${CDN77_BUCKET}/${CDN77_PATH}/${LATEST_ISO_NAME}" \
-              --endpoint-url "${CDN77_ENDPOINT_URL}" --no-progress
-          AWS_ACCESS_KEY_ID="${CDN77_ACCESS_KEY}" AWS_SECRET_ACCESS_KEY="${CDN77_SECRET_KEY}" \
-            aws s3 cp "output/${LATEST_ISO_NAME}.sha256" \
-              "s3://${CDN77_BUCKET}/${CDN77_PATH}/${LATEST_ISO_NAME}.sha256" \
-              --endpoint-url "${CDN77_ENDPOINT_URL}" --no-progress
+          cdn77_upload_with_retry "output/${LATEST_ISO_NAME}" "${CDN77_PATH}/${LATEST_ISO_NAME}"
+          cdn77_upload_with_retry "output/${LATEST_ISO_NAME}.sha256" "${CDN77_PATH}/${LATEST_ISO_NAME}.sha256"
           echo "CDN77 upload complete."
         else
           echo "CDN77 upload disabled or non-stable branch; skipping."
