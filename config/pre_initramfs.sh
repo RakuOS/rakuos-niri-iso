@@ -21,11 +21,27 @@ for flavor in rakuos rakuos-deck; do
 done
 rum -y versionlock delete "${kernel_pkgs[@]}" 2>/dev/null || true
 rum --setopt=protect_running_kernel=False -y remove "${kernel_pkgs[@]}" 2>/dev/null || true
+# The image's RakuOS-signed drivers (rakuos-kmod-*) are built for the RakuOS
+# kernels removed above, and rakuos-kmod-wl conflicts with the akmod-wl
+# installed below for the Fedora kernel. --nodeps keeps their companion
+# packages (broadcom-wl, ...), whose <name>-kmod the akmods take over.
+mapfile -t rakuos_kmods < <(rpm -qa --qf '%{NAME}\n' 'rakuos-kmod-*')
+if [ "${#rakuos_kmods[@]}" -gt 0 ]; then
+    rpm -e --nodeps "${rakuos_kmods[@]}"
+fi
 (cd /usr/lib/modules && rm -rf -- ./*)
 # --exclude: nothing may pull a RakuOS or deck kernel back into the live image.
 rum -y --repo fedora,updates --setopt=tsflags=noscripts --exclude='kernel-rakuos*' install kernel kernel-core kernel-devel kernel-modules
 
-rum -y --exclude='kernel-rakuos*' install \
+# akmods and akmod-wl build Broadcom Wi-Fi for the live session's Fedora
+# kernel (akmods --force below). Images no longer ship akmods, and RPM
+# Fusion, where akmod-wl and broadcom-wl come from, is off by default, so
+# its package repos are enabled for this one command.
+rum -y --exclude='kernel-rakuos*' \
+    --enablerepo=rpmfusion-free,rpmfusion-free-updates,rpmfusion-nonfree,rpmfusion-nonfree-updates \
+    install \
+    akmods \
+    akmod-wl \
     virtualbox-guest-additions \
     amd-gpu-firmware \
     amd-ucode-firmware \
