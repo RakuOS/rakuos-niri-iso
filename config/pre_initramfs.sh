@@ -6,56 +6,26 @@ echo "Preparing initramfs for RakuOS Linux Live ISO"
 # Swap the RakuOS kernel for a vanilla signed Fedora kernel so the live ISO
 # boots with Secure Boot enabled. The installed system gets kernel-rakuos
 # from the container image — this only affects the live boot environment.
-kernel_pkgs=(
-    kernel-rakuos-v2
-    kernel-rakuos-v2-core
-    kernel-rakuos-v2-devel
-    kernel-rakuos-v2-devel-matched
-    kernel-rakuos-v2-modules
-    kernel-rakuos-v2-modules-core
-    kernel-rakuos-v2-modules-extra
-    kernel-rakuos-v3
-    kernel-rakuos-v3-core
-    kernel-rakuos-v3-devel
-    kernel-rakuos-v3-devel-matched
-    kernel-rakuos-v3-modules
-    kernel-rakuos-v3-modules-core
-    kernel-rakuos-v3-modules-extra
-    kernel-rakuos-v4
-    kernel-rakuos-v4-core
-    kernel-rakuos-v4-devel
-    kernel-rakuos-v4-devel-matched
-    kernel-rakuos-v4-modules
-    kernel-rakuos-v4-modules-core
-    kernel-rakuos-v4-modules-extra
-    kernel-rakuos-v2-staging
-    kernel-rakuos-v2-staging-core
-    kernel-rakuos-v2-staging-devel
-    kernel-rakuos-v2-staging-devel-matched
-    kernel-rakuos-v2-staging-modules
-    kernel-rakuos-v2-staging-modules-core
-    kernel-rakuos-v2-staging-modules-extra
-    kernel-rakuos-v3-staging
-    kernel-rakuos-v3-staging-core
-    kernel-rakuos-v3-staging-devel
-    kernel-rakuos-v3-staging-devel-matched
-    kernel-rakuos-v3-staging-modules
-    kernel-rakuos-v3-staging-modules-core
-    kernel-rakuos-v3-staging-modules-extra
-    kernel-rakuos-v4-staging
-    kernel-rakuos-v4-staging-core
-    kernel-rakuos-v4-staging-devel
-    kernel-rakuos-v4-staging-devel-matched
-    kernel-rakuos-v4-staging-modules
-    kernel-rakuos-v4-staging-modules-core
-    kernel-rakuos-v4-staging-modules-extra
-)
+# Every RakuOS kernel package the image can carry: both flavors (kernel-rakuos
+# and the Steam Deck kernel-rakuos-deck), each x86-64 level, stable and
+# staging, with all their subpackages.
+kernel_pkgs=()
+for flavor in rakuos rakuos-deck; do
+    for isa in v2 v3 v4; do
+        for channel in "" -staging; do
+            for sub in "" -core -devel -devel-matched -modules -modules-core -modules-extra; do
+                kernel_pkgs+=("kernel-${flavor}-${isa}${channel}${sub}")
+            done
+        done
+    done
+done
 rum -y versionlock delete "${kernel_pkgs[@]}" 2>/dev/null || true
 rum --setopt=protect_running_kernel=False -y remove "${kernel_pkgs[@]}" 2>/dev/null || true
 (cd /usr/lib/modules && rm -rf -- ./*)
-rum -y --repo fedora,updates --setopt=tsflags=noscripts install kernel kernel-core kernel-devel kernel-modules
+# --exclude: nothing may pull a RakuOS or deck kernel back into the live image.
+rum -y --repo fedora,updates --setopt=tsflags=noscripts --exclude='kernel-rakuos*' install kernel kernel-core kernel-devel kernel-modules
 
-rum -y install \
+rum -y --exclude='kernel-rakuos*' install \
     virtualbox-guest-additions \
     amd-gpu-firmware \
     amd-ucode-firmware \
