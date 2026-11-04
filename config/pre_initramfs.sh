@@ -77,7 +77,6 @@ rum -y --exclude='kernel-rakuos*' \
     realtek-firmware \
     tiwilink-firmware \
     atmel-firmware \
-    zd1211-firmware \
     broadcom-wl \
     NetworkManager-wifi
 
