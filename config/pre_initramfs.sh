@@ -20,8 +20,8 @@ for flavor in rakuos rakuos-deck; do
     done
 done
 # Only the ones actually installed: given names that aren't installed, the
-# removal refuses everything, which used to leave the RakuOS kernel (and its
-# -devel, so akmod-wl's posttrans built wl for it too) in the live image.
+# removal refuses everything, which used to leave the RakuOS kernel in the
+# live image.
 # rpm directly, without scriptlets or dependency checks: rum protects
 # kernels, and the kernel's removal scriptlets don't apply in an image
 # build. No "|| true": a RakuOS kernel left behind must stop the build.
@@ -35,26 +35,20 @@ if [ -n "$leftover" ]; then
     echo "ERROR: RakuOS kernel packages still installed:"; echo "$leftover"; exit 1
 fi
 # The image's RakuOS-signed drivers (rakuos-kmod-*) are built for the RakuOS
-# kernels removed above, and rakuos-kmod-wl conflicts with the akmod-wl
-# installed below for the Fedora kernel. --nodeps keeps their companion
-# packages (broadcom-wl, ...), whose <name>-kmod the akmods take over.
-mapfile -t rakuos_kmods < <(rpm -qa --qf '%{NAME}\n' 'rakuos-kmod-*')
+# kernels removed above. The live ISO ships no Broadcom wl driver: drop the
+# wl companion package too, whose modprobe.d blacklists the open Broadcom
+# drivers (b43, bcma, ssb) the live session uses instead.
+mapfile -t rakuos_kmods < <(rpm -qa --qf '%{NAME}\n' 'rakuos-kmod-*' broadcom-wl)
 if [ "${#rakuos_kmods[@]}" -gt 0 ]; then
     rpm -e --nodeps "${rakuos_kmods[@]}"
 fi
 (cd /usr/lib/modules && rm -rf -- ./*)
 # --exclude: nothing may pull a RakuOS or deck kernel back into the live image.
-rum -y --repo fedora,updates --setopt=tsflags=noscripts --exclude='kernel-rakuos*' install kernel kernel-core kernel-devel kernel-modules
+rum -y --repo fedora,updates --setopt=tsflags=noscripts --exclude='kernel-rakuos*' install kernel kernel-core kernel-modules
 
-# akmods and akmod-wl build Broadcom Wi-Fi for the live session's Fedora
-# kernel (akmods --force below). Images no longer ship akmods, and RPM
-# Fusion, where akmod-wl and broadcom-wl come from, is off by default, so
-# its package repos are enabled for this one command.
+# Firmware for the live session's hardware.
 rum -y --exclude='kernel-rakuos*' \
-    --enablerepo=rpmfusion-free,rpmfusion-free-updates,rpmfusion-nonfree,rpmfusion-nonfree-updates \
     install \
-    akmods \
-    akmod-wl \
     virtualbox-guest-additions \
     amd-gpu-firmware \
     amd-ucode-firmware \
@@ -77,15 +71,12 @@ rum -y --exclude='kernel-rakuos*' \
     realtek-firmware \
     tiwilink-firmware \
     atmel-firmware \
-    broadcom-wl \
     NetworkManager-wifi
 
 KVER="$(rpm -q kernel-core --qf '%{VERSION}-%{RELEASE}.%{ARCH}\n' | sort -V | tail -1)"
-akmods --force --kernels "$KVER"
 
 # Only the Fedora kernel belongs in the live image; drop any other modules
-# tree (one appearing here means something built for a kernel that should be
-# gone).
+# tree.
 find /usr/lib/modules -mindepth 1 -maxdepth 1 ! -name "$KVER" -print -exec rm -rf {} +
 depmod "$KVER"
 rum clean all -yq
