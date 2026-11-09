@@ -34,7 +34,7 @@ rm -rf "${SELF_DIR}/work"
 IMAGE_REPO="quay.io/rakuos/rakuos-niri"
 BRANCH_SLUG="${1:-latest}"
 IMAGE_REF="${IMAGE_REPO}:${BRANCH_SLUG}"
-COMPRESSION="${COMPRESSION:-squashfs}"
+COMPRESSION="${COMPRESSION:-erofs}"
 PLATFORM="${PLATFORM:-amd64}"
 
 # Matches .gitlab-ci.yml's LATEST_ISO_NAME: no branch segment for the

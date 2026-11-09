@@ -20,23 +20,6 @@ rum -qy versionlock clear
 # Install RakuOS installer (GTK frontend + common backend + fisherman)
 rum install -qy rakuos-installer-gtk
 
-# Allow the RakuOS installer's local `oci:` re-export of this image to pass
-# signature policy: the default policy.json (default: reject, per-registry
-# allowances only under the `docker` transport) has no `oci` transport entry,
-# so bootc install --source-imgref oci:... gets rejected with "Source image
-# ... is rejected by policy." even though the OCI export never leaves this
-# same, already-trusted image. Scope the relaxation to `oci` only -- leave
-# the registry/sigstore checks under `docker` untouched.
-python3 - <<'PY'
-import json
-path = "/etc/containers/policy.json"
-with open(path) as f:
-    policy = json.load(f)
-policy.setdefault("transports", {})["oci"] = {"": [{"type": "insecureAcceptAnything"}]}
-with open(path, "w") as f:
-    json.dump(policy, f, indent=2)
-PY
-
 # Mask overlay services so they cannot be started or pulled in on the live ISO
 systemctl mask rakuos-overlay-sync.service rakuos-overlay-mount.service
 
@@ -62,10 +45,12 @@ if [[ -f /usr/share/rakuos/packages-live.list ]]; then
 fi
 
 # Variables
-imageref="$(podman images --format '{{ index .Names 0 }}\n' 'rakuos*' | head -1)"
+# rakuos-forge passes the image this live system is built from (there is
+# no container store to ask inside the live image build).
+imageref="${RAKUOS_IMAGE_REF:?rakuos-forge sets RAKUOS_IMAGE_REF}"
 imageref="${imageref##*://}"
-imageref="${imageref%%:*}"
-imagetag="$(podman images --format '{{ .Tag }}\n' "$imageref" | head -1)"
+imagetag="${imageref##*:}"
+imageref="${imageref%:*}"
 
 echo "RakuOS release $VERSION_ID ($VERSION_CODENAME)" >/etc/system-release
 
