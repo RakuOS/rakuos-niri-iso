@@ -6,29 +6,18 @@ echo "Preparing initramfs for RakuOS Linux Live ISO"
 # Swap the RakuOS kernel for a vanilla signed Fedora kernel so the live ISO
 # boots with Secure Boot enabled. The installed system gets kernel-rakuos
 # from the container image — this only affects the live boot environment.
-# Every RakuOS kernel package the image can carry: both flavors (kernel-rakuos
-# and the Steam Deck kernel-rakuos-deck), each x86-64 level, stable and
-# staging, with all their subpackages.
-kernel_pkgs=()
-for flavor in rakuos rakuos-deck; do
-    for isa in v2 v3 v4; do
-        for channel in "" -staging; do
-            for sub in "" -core -devel -devel-matched -modules -modules-core -modules-extra; do
-                kernel_pkgs+=("kernel-${flavor}-${isa}${channel}${sub}")
-            done
-        done
-    done
-done
-# Only the ones actually installed: given names that aren't installed, the
-# removal refuses everything, which used to leave the RakuOS kernel in the
-# live image.
+# Every RakuOS kernel package installed in the image, whatever its flavor:
+# kernel-rakuos and the Steam Deck kernel-rakuos-deck, normal and anti-cheat
+# (-ac), each x86-64 level, stable and staging, with all subpackages. Asking
+# rpm for what's installed instead of listing names keeps new variants from
+# slipping through.
 # rpm directly, without scriptlets or dependency checks: rum protects
 # kernels, and the kernel's removal scriptlets don't apply in an image
 # build. No "|| true": a RakuOS kernel left behind must stop the build.
-mapfile -t installed_kernel_pkgs < <(rpm -q --qf '%{NAME}\n' "${kernel_pkgs[@]}" | grep -v ' is not installed$' || true)
+mapfile -t installed_kernel_pkgs < <(rpm -qa --qf '%{NAME}\n' 'kernel-rakuos*' | sort -u)
 if [ "${#installed_kernel_pkgs[@]}" -gt 0 ]; then
     rum -y versionlock delete "${installed_kernel_pkgs[@]}" 2>/dev/null || true
-    rpm -e --nodeps --noscripts "${installed_kernel_pkgs[@]}"
+    rpm -e --nodeps --noscripts --allmatches "${installed_kernel_pkgs[@]}"
 fi
 leftover="$(rpm -qa 'kernel-rakuos*')"
 if [ -n "$leftover" ]; then
