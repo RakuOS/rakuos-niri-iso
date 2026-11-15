@@ -64,6 +64,15 @@ stages:
   before_script:
     - |
       set -euo pipefail
+      # GitLab's job container has /var/lib/containers and /var/tmp on its
+      # own overlayfs, where GitHub's runners have real volumes. Podman's
+      # store, buildah's scratch space and bootc's install (which gets both
+      # bind-mounted from here) need a real filesystem: bind directories from
+      # the builds volume over them before podman touches them.
+      mkdir -p "${CI_PROJECT_DIR}/.containers" "${CI_PROJECT_DIR}/.var-tmp" /var/lib/containers /var/tmp
+      mount --bind "${CI_PROJECT_DIR}/.containers" /var/lib/containers
+      mount --bind "${CI_PROJECT_DIR}/.var-tmp" /var/tmp
+      chmod 1777 /var/tmp
       # buildah puts an overlay over the build context (rakuos-forge's live
       # image step), with its upper dir in $TMPDIR. /var/tmp sits on the job
       # container's own overlayfs, which the kernel refuses as an upper dir
