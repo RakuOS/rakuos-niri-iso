@@ -56,6 +56,8 @@ stages:
   - build
 
 .iso-job:
+  # building, then uploading to CDN77 and SourceForge, can take hours
+  timeout: 5h
   image: $JOB_IMAGE
   tags:
     - saas-linux-2xlarge-amd64
@@ -69,6 +71,11 @@ stages:
       # argument"). Keep it on the builds volume, a real filesystem.
       export TMPDIR="${CI_PROJECT_DIR}/.buildah-tmp"
       mkdir -p "${TMPDIR}"
+      # bootc install (rakuos-forge's staging-install step) compares
+      # /run/udev inside its container with /proc/1/root/run/udev, and forge
+      # only binds it in when it exists. The job container has no udev, so
+      # create it.
+      mkdir -p /run/udev
       dnf install -y \
         git \
         podman \
@@ -270,6 +277,7 @@ build-iso-standard:
     expire_in: 7 days
 
 notify-discord:
+  timeout: 3h
   stage: build
   image: curlimages/curl:latest
   needs:
