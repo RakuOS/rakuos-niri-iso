@@ -76,6 +76,36 @@ stages:
       # only binds it in when it exists. The job container has no udev, so
       # create it.
       mkdir -p /run/udev
+      # No udevd runs in the job container (its own network namespace never
+      # gets the kernel's device events), so nothing fills udev's database,
+      # and bootc install stops with "root partition 3 has type <none>":
+      # it reads partition types through it right after partitioning. Fill
+      # it ourselves for the loop devices and their partitions, from
+      # `blkid -p`, in udev's format, refreshed as they're formatted.
+      mkdir -p /run/udev/data
+      cat > /usr/local/bin/udev-db-fill <<'FILL'
+      #!/usr/bin/bash
+      while true; do
+          for sys in /sys/class/block/loop*; do
+              [ -r "$sys/dev" ] || continue
+              name=${sys##*/}
+              majmin=$(cat "$sys/dev")
+              [ "$(cat "$sys/size" 2>/dev/null || echo 0)" != 0 ] || continue
+              dev=/dev/$name
+              [ -b "$dev" ] || mknod "$dev" b "${majmin%%:*}" "${majmin##*:}" 2>/dev/null || continue
+              props=$(blkid -p -o udev "$dev" 2>/dev/null) || props=
+              [ -n "$props" ] || continue
+              db=/run/udev/data/b$majmin
+              want=$(printf 'E:%s\n' $props)
+              if [ "$(grep '^E:' "$db" 2>/dev/null)" != "$want" ]; then
+                  printf 'I:%s\n%s\n' "$(date +%s%6N)" "$want" > "$db.tmp" && mv -f "$db.tmp" "$db"
+              fi
+          done
+          sleep 0.02
+      done
+      FILL
+      chmod +x /usr/local/bin/udev-db-fill
+      nohup /usr/local/bin/udev-db-fill >/dev/null 2>&1 &
       dnf install -y \
         git \
         podman \
