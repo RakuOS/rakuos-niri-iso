@@ -62,6 +62,13 @@ stages:
   before_script:
     - |
       set -euo pipefail
+      # buildah puts an overlay over the build context (rakuos-forge's live
+      # image step), with its upper dir in $TMPDIR. /var/tmp sits on the job
+      # container's own overlayfs, which the kernel refuses as an upper dir
+      # ("mounting an overlay over build context directory ... invalid
+      # argument"). Keep it on the builds volume, a real filesystem.
+      export TMPDIR="${CI_PROJECT_DIR}/.buildah-tmp"
+      mkdir -p "${TMPDIR}"
       dnf install -y \
         git \
         podman \
