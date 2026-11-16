@@ -5,7 +5,10 @@
 # The same steps as the GitLab job build-iso-standard.
 set -euo pipefail
 
-dnf install -y -q git podman jq curl findutils tar openssh-clients sshpass awscli
+# The ISO assembly tools too: without them rakuos-forge assembles in a nested
+# builder container, which has no DNS on the GitHub runner.
+dnf install -y -q git podman jq curl findutils tar openssh-clients sshpass awscli \
+  util-linux erofs-utils dosfstools mtools skopeo btrfs-progs
 
 case "${BRANCH}" in
   main)    BRANCH_SLUG=latest;  IS_STABLE=true ;;
