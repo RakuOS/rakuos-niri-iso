@@ -34,8 +34,12 @@ sudo cp -a . "${WORK}/src/"
 df -h /
 
 export BRANCH="${GITHUB_REF_NAME}"
+# CI: GitHub sets it on the runner; rakuos-forge needs it inside the build
+# container too, or it refuses to make the ISO in a container instead of
+# installing its ISO tools ("Cannot run in nested containers").
+export CI="${CI:-true}"
 PASS_VARS=(
-  BRANCH EDITION IMAGE_REPO CDN77_PATH SOURCEFORGE_DIR FORGE_MODE
+  CI BRANCH EDITION IMAGE_REPO CDN77_PATH SOURCEFORGE_DIR FORGE_MODE
   SOURCEFORGE_UPLOAD CDN77_UPLOAD
   CDN77_CDN_ID CDN77_API_KEY CDN77_ACCESS_KEY CDN77_SECRET_KEY CDN77_BUCKET CDN77_ENDPOINT_URL
   SOURCEFORGE_USERNAME SOURCEFORGE_PASSWORD SOURCEFORGE_HOST SOURCEFORGE_LATEST_PATH SOURCEFORGE_ARCHIVE_ROOT
